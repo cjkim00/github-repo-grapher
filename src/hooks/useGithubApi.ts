@@ -7,7 +7,6 @@ import { Parser, Language, Tree } from 'web-tree-sitter';
 import type { FileContents } from '../objects/FileContents';
 import type { FileGraphNode } from '../objects/FIleGraphNode';
 import extractGithubFileNameFromPath, { extractGithubFileNameFromUrl } from '../helpers/ExtractGithubFileName';
-
 export function useGithubApi(url: string) {
     const [response, setResponse] = useState<GithubResponse | null>();
     const [files, setFiles] = useState<GithubFile[]>([]);
