@@ -1,7 +1,7 @@
-export interface FileGraphNode {
-    fileName: string,
-    fileCode: string,
-    fileSource: string, //Basically a replacement for an ID
-    adjacencyArray: FileGraphNode[]
-
-}
+export type FileGraphNode = {
+  fileName: string;       // used as the lookup key (no extension)
+  displayName: string;    // shown in the UI (with extension)
+  fileCode: string;
+  fileSource: string;
+  adjacencyArray: FileGraphNode[];
+};

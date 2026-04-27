@@ -13,12 +13,14 @@
     "20": "^3.1.9",
     "@xyflow/react": "^12.10.2",
     "dagre": "^0.8.5",
+    "elkjs": "^0.11.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tree-sitter": "^0.21.1",
     "tree-sitter-typescript": "^0.23.2",
     "tree-sitter-wasms": "^0.1.13",
-    "web-tree-sitter": "^0.26.8"
+    "web-tree-sitter": "^0.26.8",
+    "web-worker": "^1.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

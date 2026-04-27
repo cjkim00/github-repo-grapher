@@ -12,7 +12,7 @@ export function useGithubApi(url: string) {
     const [files, setFiles] = useState<GithubFile[]>([]);
 
     const [validFiles, setValidFiles] = useState<ValidFile[]>([]);
-    const [adjacencyList, setAdjacencyList] = useState<Map<string, string[]>>(new Map());
+    const [adjacencyList, setAdjacencyList] = useState<Map<string, FileGraphNode[]>>(new Map());
     const [fileGraphNodeMap, setFileGraphNodeMap] = useState<Map<string, FileGraphNode>>(new Map());
 
     useEffect(() => {
@@ -28,25 +28,25 @@ export function useGithubApi(url: string) {
         fetchData();
     }, [url]);
 
-    function buildAdjacencyList(graphNodes: FileGraphNode[]): Map<string, string[]> {
-    const adjList = new Map<string, string[]>();
-    const nodeMap = new Map<string, FileGraphNode>();
+    function buildAdjacencyList(graphNodes: FileGraphNode[]): Map<string, FileGraphNode[]> {
+        const adjList = new Map<string, FileGraphNode[]>();
+        const nodeMap = new Map<string, FileGraphNode>();
 
-    for (const node of graphNodes) {
-        const fileName = extractGithubFileNameFromPath(node.fileSource);
-        adjList.set(
-            fileName,
-            node.adjacencyArray.map(neighbor => extractGithubFileNameFromPath(neighbor.fileSource))
-        );
-        nodeMap.set(fileName, node);
+        for (const node of graphNodes) {
+            const fileName = extractGithubFileNameFromPath(node.fileSource);
+            adjList.set(
+                fileName,
+                node.adjacencyArray  // already FileGraphNode[], no mapping needed
+            );
+            nodeMap.set(fileName, node);
+        }
+
+        setAdjacencyList(adjList);
+        setFileGraphNodeMap(nodeMap);
+        return adjList;
     }
 
-    setAdjacencyList(adjList);
-    setFileGraphNodeMap(nodeMap);
-    return adjList;
-}
-
-    async function callGithubApi(apiUrl: string = url): Promise<Map<string, string[]> | null> {
+    async function callGithubApi(apiUrl: string = url): Promise<Map<string, FileGraphNode[]> | null> {
         try {
             // 1. Fetch all files in the repo tree
             const repoFiles = await getRepoFiles(apiUrl, token);
@@ -157,12 +157,12 @@ export function useGithubApi(url: string) {
 
     async function parseCode(code: FileContents, allFiles: FileContents[]): Promise<FileGraphNode> {
         await initParser();
-        console.log(code.url);
+        //console.log(code.url);
         const tree = parser!.parse(code.content);
         if (!tree) throw new Error("Tree is undefined");
 
         const node = extractImportsExports(code, tree, allFiles);
-        console.log(node);
+        //console.log(node);
         return node;
     }
 
@@ -177,9 +177,10 @@ export function useGithubApi(url: string) {
 
         const adjacencyArray: FileGraphNode[] = extractedImportsArr
             .map(importName => (allFiles ?? []).find(f => extractGithubFileNameFromPath(f.path) === importName))
-            .filter((f): f is FileContents => f !== undefined)
+            .filter((f): f is FileContents => f !== undefined && !!f.path) // ← also guard f.path
             .map(f => ({
                 fileName: extractGithubFileNameFromPath(f.path),
+                displayName: f.path.split('/').at(-1)!,
                 fileCode: f.content,
                 fileSource: f.path,
                 adjacencyArray: []
@@ -187,6 +188,7 @@ export function useGithubApi(url: string) {
 
         return {
             fileName: extractGithubFileNameFromPath(fileContents.path),
+            displayName: fileContents.path.split('/').at(-1)!,
             fileCode: fileContents.content,
             fileSource: fileContents.path,
             adjacencyArray
@@ -194,16 +196,27 @@ export function useGithubApi(url: string) {
     }
 
     async function buildGraph(allFiles: FileContents[]): Promise<FileGraphNode[]> {
-        return Promise.all(allFiles.map(file => parseCode(file, allFiles)));
+        const batchSize = 10; // tweak this
+        const result: FileGraphNode[] = [];
+
+        for (let i = 0; i < allFiles.length; i += batchSize) {
+            const batch = allFiles.slice(i, i + batchSize);
+
+            const batchResults = await Promise.all(
+                batch.map(file => parseCode(file, allFiles))
+            );
+
+            result.push(...batchResults);
+        }
+
+        return result;
     }
 
     function extractValidFiles(files: GithubFile[], setValidFiles: React.Dispatch<React.SetStateAction<ValidFile[]>>) {
         const validFilesArr = files
             .filter((file) => file.path.endsWith(".ts"))
             .map((file) => ({ fileName: file.path.split('/').at(-1)!, fileUrl: file.url, filePath: file.path }));
-        for (const file of validFilesArr) {
-            console.log(file.fileName);
-        }
+
         setValidFiles(validFilesArr);
     }
 

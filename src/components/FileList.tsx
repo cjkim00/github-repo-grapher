@@ -2,21 +2,20 @@ import type { FileGraphNode } from "../objects/FIleGraphNode";
 import { File } from "./File";
 
 interface FileListProps {
-    adjacencyList: Map<string, string[]>;
+    adjacencyList: Map<string, FileGraphNode[]>;
     fileGraphNodeMap: Map<string, FileGraphNode>;
-    onFileClick: (fileName: string) => void;
+    setCurrentGraphFile: (fileName: string) => void;
     currentGraphFile: string;
 }
 
-export function FileList({ adjacencyList, fileGraphNodeMap, onFileClick, currentGraphFile }: FileListProps) {
+export function FileList({ adjacencyList, fileGraphNodeMap, setCurrentGraphFile, currentGraphFile }: FileListProps) {
     return (
-        <div>
-            <p>File List</p>
-            {Array.from(adjacencyList.keys()).map((fileName) => (
+        <div style={{width: '350px', maxHeight: '95vh', overflowY: 'auto', padding: '10px', borderRight: '1px solid #ccc'}}>
+            {Array.from(adjacencyList.keys()).sort((a, b) => a.localeCompare(b)).map((fileName) => (
                 <File
-                    key={fileName}
+                    key={fileGraphNodeMap.get(fileName)!.fileSource}
                     fileNode={fileGraphNodeMap.get(fileName)!}
-                    onFileClick={onFileClick}
+                    setCurrentGraphFile={setCurrentGraphFile}
                     isActive={fileName === currentGraphFile}
                 />
             ))}

@@ -3,11 +3,11 @@ import type { FileGraphNode } from "../objects/FIleGraphNode";
 
 interface FileProps {
     fileNode: FileGraphNode;
-    onFileClick: (fileName: string) => void;
+    setCurrentGraphFile: (fileName: string) => void;
     isActive: boolean;
 }
 
-export function File({ fileNode, onFileClick, isActive }: FileProps) {
+export function File({ fileNode, setCurrentGraphFile, isActive }: FileProps) {
     const [showCode, setShowCode] = useState<boolean>(false);
 
     return (
@@ -20,7 +20,7 @@ export function File({ fileNode, onFileClick, isActive }: FileProps) {
                 cursor: "pointer",
                 outline: isActive ? "2px solid #0077aa" : "none",
             }}
-            onClick={() => onFileClick(fileNode.fileName)}
+            onClick={() => setCurrentGraphFile(fileNode.fileName)}
         >
             <span
                 onClick={(e) => { e.stopPropagation(); setShowCode(s => !s); }}

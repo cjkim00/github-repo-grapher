@@ -1,27 +1,35 @@
-import { ReactFlow, type Node, type Edge } from '@xyflow/react';
+import type { Node, Edge } from '@xyflow/react';
+import extractGithubFileNameFromPath from '../helpers/ExtractGithubFileName';
+import type { FileGraphNode } from '../objects/FIleGraphNode';
 
-export function buildNodesAndEdges(adjacencyList: Map<string, string[]>) {
+export function buildNodesAndEdges(
+    adjacencyList: Map<string, FileGraphNode[]>,
+    fileGraphNodeMap: Map<string, FileGraphNode>,
+) {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
-    let i = 0;
-    for (const [fileName, neighbors] of adjacencyList.entries()) {
-        // Create a node for each file
+    for (const [fileName, neighborNodes] of adjacencyList.entries()) {
+        if (!fileName) continue;
+
+        const displayName = fileGraphNodeMap.get(fileName)?.displayName ?? fileName;
         nodes.push({
             id: fileName,
-            data: { label: fileName },
-            position: { x: i * 200, y: 0 } // basic positioning for now
+            data: { label: displayName },
+            position: { x: 0, y: 0 }, // dagre will set real positions
         });
 
-        // Create an edge for each connection
-        for (const neighbor of neighbors) {
+        for (const neighbor of neighborNodes) {
+            if (!neighbor?.fileSource) continue;
+            const neighborName = extractGithubFileNameFromPath(neighbor.fileSource);
+            if (!neighborName) continue;
+
             edges.push({
-                id: `${fileName}-${neighbor}`,
+                id: `${fileName}-${neighborName}`,
                 source: fileName,
-                target: neighbor,
+                target: neighborName,
             });
         }
-        i++;
     }
 
     return { nodes, edges };
