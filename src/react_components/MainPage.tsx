@@ -24,9 +24,8 @@ export function MainPage() {
             console.log("url is invalid");
             return;
         }
-        const { user, repoName } = extractRepoName(textboxText);
-        const apiUrl = createGithubApiUrl(user, repoName);
-        callGithubApi(apiUrl);
+        
+        callGithubApi(textboxText);
         setShowEmpty((show) => true);
     }
 

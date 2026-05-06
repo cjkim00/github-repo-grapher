@@ -7,6 +7,8 @@ import { Parser, Language, Tree } from 'web-tree-sitter';
 import type { FileContents } from '../objects/FileContents';
 import type { FileGraphNode } from '../objects/FIleGraphNode';
 import extractGithubFileNameFromPath, { extractGithubFileNameFromUrl } from '../helpers/ExtractGithubFileName';
+import { extractRepoName } from '../helpers/ExtractRepoName';
+import { createGithubApiUrl } from '../helpers/CreateGithubApiUrl';
 
 export function useGithubApi(url: string) {
     const [response, setResponse] = useState<GithubResponse | null>();
@@ -19,7 +21,7 @@ export function useGithubApi(url: string) {
     useEffect(() => {
         async function fetchData() {
             try {
-                const res = await getRepoFiles(url, token);
+                const res = await getRepoFiles(url);
                 setFiles(res);
             } catch (err) {
                 console.log(err);
@@ -47,10 +49,13 @@ export function useGithubApi(url: string) {
         return adjList;
     }
 
-    async function callGithubApi(apiUrl: string = url): Promise<Map<string, FileGraphNode[]> | null> {
+    async function callGithubApi(url: string): Promise<Map<string, FileGraphNode[]> | null> {
         try {
+
+
+
             // 1. Fetch all files in the repo tree
-            const repoFiles = await getRepoFiles(apiUrl, token);
+            const repoFiles = await getRepoFiles(url);
 
             if (!repoFiles || repoFiles.length === 0) {
                 throw new Error("No files returned from GitHub API. Check the URL or token.");
@@ -74,7 +79,7 @@ export function useGithubApi(url: string) {
             // 3. Fetch the contents of each valid file
             const fileContentsSettled = await Promise.allSettled(
                 tsFiles.map(async (file) => {
-                    const contents = await getRepoFileContents(file.fileUrl, token);
+                    const contents = await getRepoFileContents(file.fileUrl);
 
                     // Bad server response check
                     if (!contents || !contents.content) {
@@ -118,22 +123,19 @@ export function useGithubApi(url: string) {
         }
     }
 
-    async function getRepoFiles(url: string, token: string): Promise<GithubFile[]> {
-        const res = await fetch(url, {
-            headers: {
-                Authorization: token
-            }
-        });
+
+    async function getRepoFiles(url: string): Promise<GithubFile[]> {
+        const { user, repoName } = extractRepoName(url);
+        //const apiUrl = createGithubApiUrl(user, repoName);
+        const res = await fetch(`http://localhost:3000/api/repo?user=${user}&repo=${repoName}`);
         const data = await res.json();
         const githubFiles: GithubFile[] = Array.from((data.tree));
         return githubFiles;
     }
 
-    async function getRepoFileContents(url: string, token: string): Promise<GithubFileContents> {
+    async function getRepoFileContents(url: string): Promise<GithubFileContents> {
         const res = await fetch(url, {
-            headers: {
-                Authorization: token
-            }
+
         });
         const data: GithubFileContents = await res.json();
         return data;
