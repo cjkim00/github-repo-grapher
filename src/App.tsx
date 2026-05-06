@@ -1,5 +1,5 @@
 import './App.css'
-import { MainPage } from './components/MainPage';
+import { MainPage } from './react_components/MainPage';
 
 export default function App() {
   return (

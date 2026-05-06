@@ -11,7 +11,7 @@ import {
 } from '@xyflow/react';
 import { getLayoutedElements } from '../react_flow/GetLayout';
 import '@xyflow/react/dist/style.css';
-
+import { useNodeSelection } from '../hooks/useNodeSelection';
 interface GraphProps {
     graphKey: string;
     adjacencyList: Map<string, FileGraphNode[]>;
@@ -19,36 +19,15 @@ interface GraphProps {
 }
 
 export function Graph({ graphKey, adjacencyList, fileGraphNodeMap }: GraphProps) {
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-
     const { nodes: layoutedNodes, edges: baseEdges } = useMemo(() => {
         const { nodes, edges } = buildNodesAndEdges(adjacencyList, fileGraphNodeMap);
         return getLayoutedElements(nodes, edges);
     }, [adjacencyList, fileGraphNodeMap]);
 
-    const highlightedEdges = useMemo(() => {
-        if (!selectedNodeId) return baseEdges;
-        return baseEdges.map((edge) => {
-            const isConnected = edge.source === selectedNodeId || edge.target === selectedNodeId;
-            return {
-                ...edge,
-                style: isConnected
-                    ? { stroke: '#ff0073', strokeWidth: 2 }
-                    : { stroke: '#b1b1b7', strokeWidth: 1, opacity: 0.3 },
-            };
-        });
-    }, [selectedNodeId, baseEdges]);
-
-    const onNodeClick: NodeMouseHandler = useCallback((_event, node) => {
-        setSelectedNodeId((prev) => (prev === node.id ? null : node.id)); // click again to deselect
-    }, []);
-
-    const onPaneClick = useCallback(() => {
-        setSelectedNodeId(null);
-    }, []);
+    const { highlightedEdges, onNodeClick, onPaneClick } = useNodeSelection(baseEdges);
 
     return (
-        <div style={{ width: "100%", height: "95vh" }}>
+        <div style={{ width: "100%", height: "100%", border: '1px solid #ccc', borderRadius: '5px', padding: '5px' }}>
             <ReactFlow
                 key={graphKey}
                 nodes={layoutedNodes}

@@ -10,7 +10,7 @@ interface FileListProps {
 
 export function FileList({ adjacencyList, fileGraphNodeMap, setCurrentGraphFile, currentGraphFile }: FileListProps) {
     return (
-        <div style={{width: '350px', maxHeight: '95vh', overflowY: 'auto', padding: '10px', borderRight: '1px solid #ccc'}}>
+        <div style={{width: '100%', height: '100%', overflowY: 'auto', border: '1px solid #ccc', borderRadius: '5px' }}>
             {Array.from(adjacencyList.keys()).sort((a, b) => a.localeCompare(b)).map((fileName) => (
                 <File
                     key={fileGraphNodeMap.get(fileName)!.fileSource}
